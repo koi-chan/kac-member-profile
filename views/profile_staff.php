@@ -32,5 +32,6 @@ foreach(array_reverse(explode('-', $post->post_name)) as $value) {
 <?php endif; ?>
 </div><!-- .profile -->
 
+<?php edit_post_link() ?>
 </div><!-- .profile-container -->
 <?php $output .= ob_get_clean(); ?>

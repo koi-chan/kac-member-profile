@@ -30,5 +30,6 @@ ob_start(); ?>
 <h4>何か一言</h4><p><?= get_post_meta($post->ID, 'words', true); ?></p>
 </div><!-- .profile -->
 
+<?php edit_post_link() ?>
 </div><!-- .profile-container -->
 <?php $output .= ob_get_clean(); ?>
