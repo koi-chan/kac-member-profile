@@ -3,6 +3,11 @@
 	padding-top: 1.5em;
 }
 
+.profile-container figure {
+	width: 40%;
+	height: auto;
+}
+
 .position {
 	color: red;
 	text-align: right;

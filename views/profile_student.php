@@ -22,6 +22,7 @@ ob_start(); ?>
 
 <div class="profile">
 <h4>学年</h4><p><?= $grade ?>年生</p>
+<h4>出身中学</h4><p><?= get_post_meta($post->ID, 'juniorhigh', true); ?></p>
 <h4>入部までの登山歴</h4><p><?= get_post_meta($post->ID, 'history', true); ?>年</p>
 <h4>登ったことのある、もしくは登ってみたい山</h4><p><?= get_post_meta($post->ID, 'mountains', true); ?></p>
 <h4>入部動機</h4><p><?= get_post_meta($post->ID, 'reason', true); ?></p>
