@@ -14,48 +14,11 @@ if(class_exists('KAC_Member_Profile') || class_exists('KACMP_INSTALL')) {
 }
 
 $kacmp = new KAC_Member_Profile();
-//add_action('admin_menu', array($kacmp, 'add_plugin_menu_handler'));
 add_action('init', array($kacmp, 'register_cpt_member_profile'));
+add_action('the_content', array($kacmp, 'rewrite_post_content'));
 
 class KAC_Member_Profile {
 	private $staff_positions = array('部長', '副部長', 'ヘッドコーチ', 'コーチ', '監督');
-
-	public function add_plugin_menu_handler() {
-		add_menu_page(
-			'部員紹介',
-			'部員紹介',
-			'manage_options',
-			'kacmp',
-			array($this, 'display_plugin_main_menu'),
-			'',
-			40,
-		);
-		register_setting(
-			'kacmp',
-			'name'
-		);
-
-		add_submenu_page(
-			'kacmp',
-			'新規部員紹介を追加',
-			'新規追加',
-			'manage_options',
-			'kacmp-list',
-			array($this, 'display_plugin_sub_menu_new')
-		);
-	}
-
-	function display_plugin_main_menu() {
-		include_once('views/list.php');
-		wp_enqueue_style('kacmp', plugins_url('styles/menu.css'));
-	}
-	function abc_validation($input) {
-	}
-
-	function display_plugin_sub_menu_new() {
-		include_once('views/new.php');
-		wp_enqueue_style('kacmp', plugins_url('styles/menu.css'));
-	}
 
 	// カスタム投稿タイプを定義する
 	public function register_cpt_member_profile() {
@@ -92,7 +55,7 @@ class KAC_Member_Profile {
 
 			'publicly_queryable' => true,
 			'exclude_from_search' => true,
-			'has_archive' => true,
+			'has_archive' => false,
 			'query_var' => true,
 			'can_export' => true,
 			'rewrite' => true,
@@ -102,6 +65,16 @@ class KAC_Member_Profile {
 
 		add_theme_support('post-thumbnails', array('member_profile'));
 		set_post_thumbnail_size(200, 200, true);
+	}
+
+	public function rewrite_post_content($content) {
+		global $post;
+
+		if($post->post_type === 'member_profile') {
+			return "[member_profile]";
+		}
+
+		return $content;
 	}
 
 	public function __construct() {
@@ -160,13 +133,7 @@ class KAC_Member_Profile {
 
 	// 指定された人の紹介だけを表示する
 	public function output_member_profile_handler() {
-		$escaped_atts = shortcode_atts(array('id' => null), $atts);
-		return $this->output_member_profile($escaped_atts['id']);
-	}
-
-	function output_member_profile($target = null) {
-		$ids = $this->get_target_ids($target);
-		return '<p>output!!</p>';
+		return $this->personal_profile();
 	}
 
 	// 条件から記事を検索し、表示する HTML を返す
@@ -202,5 +169,91 @@ class KAC_Member_Profile {
 
 		return $output;
 	}
+
+	// 経歴・主な山行歴をマークアップする
+	// param [String] $original カスタムフィールドのデータ
+	// return [String] HTML
+	function markup_histories($original) {
+		$orig_array = array_values(
+			array_filter(
+				array_map('trim', explode("\n", $original)),
+				'strlen'
+			)
+		);
+
+		$markuped_array = [['', array()]];
+		foreach($orig_array as $line) {
+			$exploded_line = explode(':', $line, 2);
+			if(count($exploded_line) == 2) {
+				$markuped_array[] = array(
+					$exploded_line[0],
+					array($exploded_line[1])
+				);
+			} else {
+				$markuped_array[array_key_last($markuped_array)][1][] = $exploded_line[0];
+			}
+		}
+
+		if($markuped_array[0][0] == '' && count($markuped_array[0][1]) == 0) {
+			array_shift($markuped_array);
+		}
+		$markuped = '<dl class="histories">';
+		foreach($markuped_array as $line) {
+			if($line[0] == '') {
+				$markuped .= '<dd>';
+			} else {
+				$markuped .= "<dt>{$line[0]}</dt><dd>";
+			}
+			$markuped .= implode('<br />', $line[1]);
+			$markuped .= '</dd>';
+		}
+		return $markuped . '</dl>';
+	}
+
+	function get_furigana() {
+		global $post;
+		$furigana = '';
+		foreach(array_reverse(explode('-', $post->post_name)) as $value) {
+			$furigana .= ucfirst(strtolower($value)) . ' ';
+		}
+		return $furigana;
+	}
+
+	// 学年を入学年度・留年歴から計算する
+	// return [Integer]
+	function get_grade() {
+		global $post;
+
+		// 強制出力学年の確認
+		$grade = get_post_meta($post->ID, 'grade', true);
+		if(!is_numeric($grade)) {
+			return $grade;
+		}
+		if($grade > 0 && $grade < 3) {
+			return $grade;
+		} elseif($grade != 0) {
+			return -2;
+		}
+
+		// 入学年度・留年歴から計算する
+		$today = getdate();
+		$enter_year = get_post_meta($post->ID, 'enter_year', true);
+		if(!is_numeric($enter_year) || $enter_year > $today['year']) {
+			return -3;
+		}
+		$stay_count = get_post_meta($post->ID, 'stay_count', true);
+		if(!is_numeric($stay_count) || $stay_count < 0 || $stay_count > 3) {
+			return -4;
+		}
+
+		if($today['mon'] < 4) {
+			$grade = $today['year'] - $enter_year;
+		} else {
+			$grade = $today['year'] - $enter_year + 1;
+		}
+
+		return $grade - $stay_count;
+	}
+
 }
 ?>

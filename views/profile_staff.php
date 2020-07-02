@@ -3,8 +3,9 @@ $furigana = '';
 foreach(array_reverse(explode('-', $post->post_name)) as $value) {
 	$furigana .= ucfirst(strtolower($value)) . ' ';
 }
+
 ob_start(); ?>
-<div class="profile">
+<div class="profile-container">
 <h3><?= get_the_title($post->ID); ?> / <?php
 foreach(array_reverse(explode('-', $post->post_name)) as $value) {
 	echo ucfirst(strtolower($value)) . ' ';
@@ -22,9 +23,14 @@ foreach(array_reverse(explode('-', $post->post_name)) as $value) {
 </figure>
 </div><!-- .wp-block-image -->
 
-<dl>
-	<dt>経歴</dt>
-	<dd><?= get_post_meta($post->ID, 'histories', true); ?></dd>
-</dl>
+<div class="profile">
+<h4>経歴</h4>
+<?= $this->markup_histories(get_post_meta($post->ID, 'histories', true)); ?>
+<?php if(get_post_meta($post->ID, 'mountains', true)): ?>
+<h4>主な山行歴</h4>
+<?= $this->markup_histories(get_post_meta($post->ID, 'mountains', true)); ?>
+<?php endif; ?>
 </div><!-- .profile -->
+
+</div><!-- .profile-container -->
 <?php $output .= ob_get_clean(); ?>
