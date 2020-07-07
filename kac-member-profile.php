@@ -81,7 +81,7 @@ class KAC_Member_Profile {
 	public function __construct() {
 		add_shortcode('member_profiles', array($this, 'output_member_profiles_handler'));
 		add_shortcode('member_profile', array($this, 'output_member_profile_handler'));
-		add_action('wp_enqueue_scripts', array($this, 'register_styles_handler'));
+		add_action('wp_enqueue_scripts', array($this, 'register_styles_handler'), 9999);
 	}
 
 	public function register_styles_handler() {
