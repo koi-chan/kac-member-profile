@@ -18,6 +18,7 @@ add_action('init', array($kacmp, 'register_cpt_member_profile'));
 add_action('the_content', array($kacmp, 'rewrite_post_content'));
 
 class KAC_Member_Profile {
+	private $student_positions = array('主将', '副将', '主務', '副務', 'なし');
 	private $staff_positions = array('部長', '副部長', 'ヘッドコーチ', 'コーチ', '監督');
 
 	// カスタム投稿タイプを定義する
@@ -112,18 +113,8 @@ class KAC_Member_Profile {
 			)
 		);
 
-		// 役職付きの生徒
-		foreach(array('主将', '副将', '主務', '副務') as $value) {
-			$query_args['meta_query']['p']['value'] = $value;
-			$output .= $this->wp_loop($query_args);
-		}
-
-		// 役職無しの生徒
-		$query_args['meta_query']['p']['value'] = 'なし';
-		$output .= $this->wp_loop($query_args);
-
-		// 先生・コーチ
-		foreach($this->staff_positions as $value) {
+		// 役職付きの生徒→役職無しの生徒→先生・コーチの順番
+		foreach(array_merge($this->student_positions, $this->staff_positions) as $value) {
 			$query_args['meta_query']['p']['value'] = $value;
 			$output .= $this->wp_loop($query_args);
 		}
